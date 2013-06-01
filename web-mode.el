@@ -431,9 +431,7 @@ HTML files can embed various kinds of blocks: javascript / css / code."
   "Determines how to indent the current line, and does it."
   (if (null level)
       (web-mode-insert-indent web-mode-indent-level)
-    (progn
-      (print level)
-      (web-mode-insert-indent level))))
+    (web-mode-insert-indent level)))
 
 (defun web-mode-indent-line ()
   "inserts a bunch of spaces in front of a line."
