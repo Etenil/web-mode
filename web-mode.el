@@ -242,6 +242,7 @@ HTML files can embed various kinds of blocks: javascript / css / code."
     (define-key keymap (kbd "C-c C-p") 'web-mode-parent-element)
     (define-key keymap (kbd "C-c C-r") 'web-mode-rename-element)
     (define-key keymap (kbd "C-c C-s") 'web-mode-select-element)
+    (define-key keymap (kbd "RET") 'web-mode-newline-and-indent)
     keymap)
   "Keymap for `web-mode'.")
 
@@ -432,15 +433,23 @@ HTML files can embed various kinds of blocks: javascript / css / code."
       (web-mode-insert-indent web-mode-indent-level)
     (web-mode-insert-indent level)))
 
-(defun web-mode-indent-line ()
+(defun web-mode-indent-line (&optional initial-indent)
   "inserts a bunch of spaces in front of a line."
   (interactive)
   (let ((inhibit-modification-hooks t)
         (current-indent (- (point) (point-at-bol)))
         (previous-indent (web-mode-previous-usable-line-level)))
-    (if (>= current-indent previous-indent)
+    (if (and (>= current-indent previous-indent)
+             (not initial-indent))
         (web-mode-do-indent)
       (web-mode-do-indent (- previous-indent current-indent)))))
+
+(defun web-mode-newline-and-indent ()
+  "Inserts a new line and indents the next line."
+  (interactive)
+  (progn
+    (newline)
+    (web-mode-indent-line t)))
 
 (defun web-mode-scan-buffer ()
   "Scan entine buffer."
