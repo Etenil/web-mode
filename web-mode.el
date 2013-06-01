@@ -54,10 +54,10 @@ HTML files can embed various kinds of blocks: javascript / css / code."
   :type 'boolean
   :group 'web-mode)
 
-(defcustom web-mode-indent-with-tabs indent-tabs-mode
+(defcustom web-mode-indent-with-tabs nil
   "Set to t to insert tab characters.")
 
-(defcustom web-mode-indent-level c-basic-offset
+(defcustom web-mode-indent-level 4
   "Indent level global to the whole of web-mode.")
 
 (defcustom web-mode-disable-autocompletion (not (display-graphic-p))
@@ -423,8 +423,7 @@ HTML files can embed various kinds of blocks: javascript / css / code."
 (defun web-mode-insert-indent (level)
   "Inserts n tabs or spaces to indent the line."
   (if web-mode-indent-with-tabs
-      (let ((num-tabs (/ level tab-width)))
-        (insert-char ?\t num-tabs))
+      (insert-char ?\t (/ level tab-width))
     (insert-char ?\  level)))
 
 (defun web-mode-do-indent (&optional level)
@@ -437,11 +436,11 @@ HTML files can embed various kinds of blocks: javascript / css / code."
   "inserts a bunch of spaces in front of a line."
   (interactive)
   (let ((inhibit-modification-hooks t)
-        (current-indent (current-indentation))
+        (current-indent (- (point) (point-at-bol)))
         (previous-indent (web-mode-previous-usable-line-level)))
     (if (>= current-indent previous-indent)
         (web-mode-do-indent)
-      (web-mode-do-indent previous-indent))))
+      (web-mode-do-indent (- previous-indent current-indent)))))
 
 (defun web-mode-scan-buffer ()
   "Scan entine buffer."
