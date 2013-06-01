@@ -54,10 +54,10 @@ HTML files can embed various kinds of blocks: javascript / css / code."
   :type 'boolean
   :group 'web-mode)
 
-(defcustom web-mode-indent-with-tabs nil
+(defcustom web-mode-indent-with-tabs indent-tabs-mode
   "Set to t to insert tab characters.")
 
-(defcustom web-mode-indent-level 4
+(defcustom web-mode-indent-level c-basic-offset
   "Indent level global to the whole of web-mode.")
 
 (defcustom web-mode-disable-autocompletion (not (display-graphic-p))
@@ -400,16 +400,50 @@ HTML files can embed various kinds of blocks: javascript / css / code."
     
     ))
 
+(defun web-mode-previous-usable-line-level ()
+  "Return the indentation of the previous non-blank line."
+  (interactive)
+  (save-excursion
+    (let ((continue t)
+          (line "")
+          (pos (point)))
+      (beginning-of-line)
+      (while (and continue
+                  (not (bobp))
+                  (forward-line -1))
+        (setq line (web-mode-trim (buffer-substring (point) (line-end-position))))
+        (when (not (string= line "")) (setq continue nil)))
+      (if (string= line "")
+          (progn
+            (goto-char pos)
+            nil)
+        (unless (null line)
+          (current-indentation))))))
+
+(defun web-mode-insert-indent (level)
+  "Inserts n tabs or spaces to indent the line."
+  (if web-mode-indent-with-tabs
+      (let ((num-tabs (/ level tab-width)))
+        (insert-char ?\t num-tabs))
+    (insert-char ?\  level)))
+
+(defun web-mode-do-indent (&optional level)
+  "Determines how to indent the current line, and does it."
+  (if (null level)
+      (web-mode-insert-indent web-mode-indent-level)
+    (progn
+      (print level)
+      (web-mode-insert-indent level))))
+
 (defun web-mode-indent-line ()
   "inserts a bunch of spaces in front of a line."
   (interactive)
-  (let ((inhibit-modification-hooks t))
-    (if web-mode-indent-with-tabs
-        (insert "\t")
-      (let ((counter 0))
-        (while (< counter web-mode-indent-level)
-          (insert " ")
-          (incf counter))))))
+  (let ((inhibit-modification-hooks t)
+        (current-indent (current-indentation))
+        (previous-indent (web-mode-previous-usable-line-level)))
+    (if (>= current-indent previous-indent)
+        (web-mode-do-indent)
+      (web-mode-do-indent previous-indent))))
 
 (defun web-mode-scan-buffer ()
   "Scan entine buffer."
@@ -1322,50 +1356,6 @@ HTML files can embed various kinds of blocks: javascript / css / code."
             (unless continue (setq pos (point))))
           )))
     (if pos (goto-char pos))
-    ))
-
-(defun web-mode-previous-usable-server-line ()
-  "Move cursor to previous non blank/comment/string line and return this line (trimmed).
-point is at the beginning of the line."
-  (interactive)
-  (let ((continue t) 
-        (line "")
-        (pos (point)))
-    (beginning-of-line)
-    (while (and continue
-                (not (bobp))
-                (forward-line -1))
-      (if (not (web-mode-is-comment-or-string-line))
-          (setq line (web-mode-trim (buffer-substring (point) (line-end-position)))))
-      (when (not (string= line "")) (setq continue nil))
-      )
-    (if (string= line "") 
-        (progn
-          (goto-char pos)
-          nil) 
-      line)
-    ))
-
-(defun web-mode-previous-usable-client-line ()
-  "Move cursor to previous non blank/comment/string line and return this line (trimmed).
-point is at the beginning of the line."
-  (interactive)
-  (let ((continue t) 
-        (line "")
-        (pos (point)))
-    (beginning-of-line)
-    (while (and continue
-                (not (bobp))
-                (forward-line -1))
-      (if (not (web-mode-is-csss-line))
-          (setq line (web-mode-trim (buffer-substring (point) (line-end-position)))))
-      (when (not (string= line "")) (setq continue nil))
-      )
-    (if (string= line "") 
-        (progn
-          (goto-char pos)
-          nil) 
-      line)
     ))
 
 (defun web-mode-is-comment-or-string-line ()
