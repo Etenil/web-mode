@@ -242,7 +242,8 @@ HTML files can embed various kinds of blocks: javascript / css / code."
     (define-key keymap (kbd "C-c C-p") 'web-mode-parent-element)
     (define-key keymap (kbd "C-c C-r") 'web-mode-rename-element)
     (define-key keymap (kbd "C-c C-s") 'web-mode-select-element)
-    (define-key keymap (kbd "RET") 'web-mode-newline-and-indent)
+    (define-key keymap (kbd "RET")       'web-mode-newline-and-indent)
+    (define-key keymap [backspace] 'web-mode-backspace-or-unindent)
     keymap)
   "Keymap for `web-mode'.")
 
@@ -433,6 +434,13 @@ HTML files can embed various kinds of blocks: javascript / css / code."
       (web-mode-insert-indent web-mode-indent-level)
     (web-mode-insert-indent level)))
 
+(defun web-mode-do-unindent (&optional max-del)
+  "Unindents"
+  (let ((max-delete (if max-del max-del 200)))
+    (if web-mode-indent-with-tabs
+        (delete-backward-char)
+      (delete-backward-char (min web-mode-indent-level max-delete)))))
+
 (defun web-mode-indent-line (&optional initial-indent)
   "inserts a bunch of spaces in front of a line."
   (interactive)
@@ -450,6 +458,16 @@ HTML files can embed various kinds of blocks: javascript / css / code."
   (progn
     (newline)
     (web-mode-indent-line t)))
+
+(defun web-mode-backspace-or-unindent ()
+  "Deletes a character or unindents depending on
+cursor's position in the line."
+  (interactive)
+  (let ((current-indent (current-indentation))
+        (point-position (- (point) (point-at-bol))))
+    (if (<= point-position current-indent)
+        (web-mode-do-unindent point-position)
+      (delete-backward-char 1))))
 
 (defun web-mode-scan-buffer ()
   "Scan entine buffer."
