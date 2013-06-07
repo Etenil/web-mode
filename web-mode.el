@@ -465,7 +465,8 @@ cursor's position in the line."
   (interactive)
   (let ((current-indent (current-indentation))
         (point-position (- (point) (point-at-bol))))
-    (if (<= point-position current-indent)
+    (if (and (> point-position 0)
+             (<= point-position current-indent))
         (web-mode-do-unindent point-position)
       (delete-backward-char 1))))
 
